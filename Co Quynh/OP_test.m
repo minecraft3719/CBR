@@ -39,6 +39,7 @@ fading=[0.8,0.6,0.4,0.2;0.9,0.7,0.5,0.3];
 delay=[0.1,0.2,0.3,0.4;0.2,0.3,0.4,0.5]*0,1;
 %DOA    = pi * rand(M,Nt);
 DOA=[pi/2,pi/4,pi/6,pi/8;pi/3,pi/5,pi/7,pi/9];
+AOA = zeros(2,4);
 d_nor=1/2;
 %H      = spec_chan(fading,delay,DOA,Nr,L,Nt);  % H(Nr,L,Nt)
 
@@ -52,21 +53,27 @@ d_nor=1/2;
 % w.r.t. fading
 %Br_fading = zeros(Nt,M,L);
 dev_h_fading_tmp=[];
+dev_h_delay = [];
 %dev_h_fading_tmp=cell(Nr,1);
 
 dev_h_fading=[];
 for Nr_index=1:Nr;
 Br_fading = spec_chan_derive_fading(fading,delay,DOA,d_nor,Nr_index,L,M,Nt);
 dev_h_fading=[dev_h_fading; transpose(Br_fading)];
-%dev_h_fading=[dev_h_fading;Br_fading];
+D_delay =  spec_chan_derive_delay(fading,delay,DOA,d_nor,Nr_index,L,M,Nt);
+dev_h_delay = [dev_h_delay; transpose(D_delay)];
 end
+
+% D_delay =  spec_chan_derive_delay(fading,delay, DOA,AOA, Nr, L,M, Nt)';
+D_DOA = spec_chan_derive_DOA(fading,delay, DOA,AOA, Nr, L,M, Nt)';
+D_AOA = spec_chan_derive_AOA(fading,delay, DOA,AOA, Nr, L,M, Nt)';
 
 %% Derivation of $h$ w.r.t. (bar{h},tau,alpha) %% channel specular parameters
 %DD = [D_fading D_delay D_AOA_Nt]; % for real parameters
 %DD = [D_fading, 1i*D_fading, D_delay, D_AOA_Nt]; % for complex parameters
 
 %G = [dev_h_fading, 1i*dev_h_fading]; 
-G = dev_h_fading; 
+G = [dev_h_fading dev_h_delay]; 
 %% ------------------------------------------------------------------------
  
 X = [];
