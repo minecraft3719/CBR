@@ -6,7 +6,7 @@ clc;
 %%
 tic
 Nt = 2;    % number of transmit antennas
-Nr = 16;    % number of receive antennas
+Nr = 2;    % number of receive antennas
 L   = 4;    % channel order                     Chua ro
 M   = 2;    % Number of multipaths 
 Pxp = 10;
@@ -145,7 +145,7 @@ for snr_i = 1 : length(SNR)
     X_nga=kron(eye(Nr),X);
 %============================================
 %Only Pilot Normal
-    Iop      = N_pilot * X_nga'*X_nga / sigmav2;            % FIM
+    Iop      =  X_nga'*X_nga / sigmav2;            % FIM
     Iop_wp      = N_pilot *Iop;
     CRB_op(snr_i) = abs(trace(pinv(Iop_wp)));
 %============================================
