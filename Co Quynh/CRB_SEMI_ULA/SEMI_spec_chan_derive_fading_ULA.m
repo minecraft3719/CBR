@@ -1,4 +1,4 @@
-function Br_fading= spec_chan_derive_fading(fading,delay,DOA,d_nor,Nr_index,L,M,Nt)
+function Br_fading= spec_chan_derive_fading(fading,delay,DOA,AOA,d_nor,Nr_index,L,M,Nt)
 
 %Nt = 4;    % number of transmit antennas
 %Nr = 4;    % number of receive antennas
@@ -15,7 +15,7 @@ Br_fading_tmp = zeros(M,L,Nt);
 for jj = 1 : Nt
     for mm = 1 : M
         for l = 1 : L
-            Br_fading_tmp(mm,l,jj)=sinc((l-1)-delay(mm,jj))*exp(-1i*2*pi*d_nor*(Nr_index-1)*sin(DOA(mm,jj))); 
+            Br_fading_tmp(mm,l,jj)=sinc((l-1)-delay(mm,jj))*exp(-1i*2*pi*d_nor*(Nr_index-1)*(sin(DOA(mm,jj))+sin(AOA(mm,Nr_index)))); 
         end
     end
 end

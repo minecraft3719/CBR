@@ -6,7 +6,7 @@ clc;
 %%
 tic
 Nt = 2;    % number of transmit antennas
-Nr = 16;    % number of receive antennas
+Nr = 8;    % number of receive antennas
 L   = 4;    % channel order                     Chua ro
 M   = 2;    % Number of multipaths 
 Pxp = 10;
@@ -37,6 +37,9 @@ fading=[0.8,0.6,0.4,0.2;0.9,0.7,0.5,0.3];
 delay=[0.1,0.2,0.3,0.4;0.2,0.3,0.4,0.5]*0.001;
 %DOA    = (-0.5+(0.5-(-0.5))*rand(M,Nt))*pi;
 DOA=[pi/2,pi/4,pi/6,pi/8;pi/3,pi/5,pi/7,pi/9];
+
+AOA = pi./[8,5,8,4,4,3,2,4,9,5,4,4,8,3,1,9; 6,2,6,5,1,2,3,1,9,5,9,2,4,4,2,9];
+% AOA = zeros(M,16);
 d_nor=1/2;
 
 %H      = spec_chan(fading,delay,DOA,Nr,L,Nt);  % H(Nr,L,Nt)
@@ -55,27 +58,30 @@ dev_h_delay_tmp=[];
 dev_h_angle_tmp=[];
 %dev_h_fading_tmp=cell(Nr,1);
 
+for test = 1:3
+    
 dev_h_fading=[];
 dev_h_delay=[];
 dev_h_angle=[];
-
+dev_h_AOA = [];
 for Nr_index=1:Nr
-Br_fading = SEMI_spec_chan_derive_fading_ULA(fading,delay,DOA,d_nor,Nr_index,L,M,Nt);
+Br_fading = SEMI_spec_chan_derive_fading_ULA(fading,delay,DOA,AOA,d_nor,Nr_index,L,M,Nt);
 dev_h_fading=[dev_h_fading; transpose(Br_fading)];
 
-Br_delay = SEMI_spec_chan_derive_delay_ULA(fading,delay,DOA,d_nor,Nr_index,L,M,Nt);
+Br_delay = SEMI_spec_chan_derive_delay_ULA(fading,delay,DOA,AOA,d_nor,Nr_index,L,M,Nt);
 dev_h_delay=[dev_h_delay; transpose(Br_delay)];
 
-Br_angle = SEMI_spec_chan_derive_angle_ULA(fading,delay,DOA,d_nor,Nr_index,L,M,Nt);
+Br_angle = SEMI_spec_chan_derive_angle_ULA(fading,delay,DOA,AOA,d_nor,Nr_index,L,M,Nt);
 dev_h_angle=[dev_h_angle; transpose(Br_angle)];
 
-
+Br_arive_angle = SEMI_spec_chan_derive_arive_angle_ULA(fading,delay,DOA,AOA,d_nor,Nr_index,L,M,Nt);
+dev_h_AOA=[dev_h_AOA; transpose(Br_arive_angle)];
 %dev_h_fading=[dev_h_fading;Br_fading];
 end
 
 %% Derivation of $h$ w.r.t. (bar{h},tau,alpha) %% channel specular parameters
 
-G = [dev_h_fading,dev_h_delay,dev_h_angle]; 
+G = [dev_h_fading,dev_h_delay,dev_h_angle, dev_h_AOA]; 
 %% ------------------------------------------------------------------------
  
 X = [];
@@ -84,7 +90,7 @@ for ii = 1 : Nt
 end
 
 
-[H, h_true]        = gen_chan_specular(fading,delay,DOA,Nr,L,Nt);
+[H, h_true]        = gen_chan_specular(fading,delay,DOA,AOA,Nr,L,Nt);
 
 
 %% CRB 
@@ -125,9 +131,8 @@ while  idx <= Nr*Nt*L
     end
 end
 
-LAMBDA = gpuArray(LAMBDA);
-partial_LAMBDA = cellfun(@gpuArray, partial_LAMBDA, 'UniformOutput', false);
-for test = 1:3
+
+% for test = 0:3
 N_total=4;
 N_pilot=N_total - test;
 N_data=test; % Dung 1 phan data
@@ -140,21 +145,21 @@ for snr_i = 1 : length(SNR)
     X_nga=kron(eye(Nr),X);
 %============================================
 %Only Pilot Normal
-    Iop      = X_nga'*X_nga / sigmav2;            % FIM
+    Iop      = N_pilot * X_nga'*X_nga / sigmav2;            % FIM
     CRB_op(snr_i) = abs(trace(pinv(Iop)));
 %============================================
 %Only Pilot Specular   
     %Iop_spec = ((-1)/(sigmav2)^2)*G*G'* X_nga'*sigmav2*eye(Nr*K)*X_nga*G*G';
-    Iop_spec = 4*G*G'*Iop*G*G';
+    Iop_spec = N_pilot *G*G'*Iop*G*G';
     CRB_op_spec(snr_i) = abs(trace(pinv(Iop_spec)));
 %============================================
 %SemiBlind
-    Cyy      = sigmax2 * LAMBDA * LAMBDA'  + sigmav2 * eye(K*Nr, 'gpuArray');
+    Cyy      = sigmax2 * LAMBDA * LAMBDA'  + sigmav2 * eye(K*Nr);
     Cyy_inv  = pinv(Cyy);   
        
     for ii = 1 : Nr*Nt*L
         partial_Cyy_hii = sigmax2 * LAMBDA * partial_LAMBDA{1,ii}';
-        parfor jj = ii : Nr*Nt*L
+        for jj = ii : Nr*Nt*L
             partial_Cyy_hjj = sigmax2 * LAMBDA * partial_LAMBDA{1,jj}';
             % Slepian-Bangs Formula
             I_D(ii,jj) = trace(Cyy_inv * partial_Cyy_hii * Cyy_inv * partial_Cyy_hjj);
@@ -162,7 +167,6 @@ for snr_i = 1 : length(SNR)
         end
         disp(ii);
     end
-    I_D = gather(I_D);
 %============================================
 %Semiblind Normal
     I_SB       = N_data*I_D+N_pilot*Iop;
@@ -171,23 +175,22 @@ for snr_i = 1 : length(SNR)
     
 %============================================
 %Semiblind Specular
-   I_SB_spec=G*G'*I_SB*G*G';
+   I_SB_spec=N_data*G*G'*I_SB*G*G';
    CRB_SB_spec_i           = pinv(I_SB_spec);
    CRB_SB_spec(snr_i)      = abs(trace(CRB_SB_spec_i));  
 end
-
-%figure
+% 
+% figure
 semilogy(SNR,CRB_op,'->')
 hold on; semilogy(SNR,CRB_op_spec,'-+')
 
 semilogy(SNR,CRB_SB,'-')
 hold on; semilogy(SNR,CRB_SB_spec,'-')
 end
-
 grid on
 ylabel('Normalized CRB')
 xlabel('SNR(dB)')
-legend('normal OP','spec OP','normal SB','spec SB')
+legend('normal OP 3 pilot','spec OP 3 pilot','normal SB 3 pilot 1 data','spec SB 3 pilot 1 data','normal OP 2 pilot','spec OP 2 pilot','normal SB 2 pilot 2 data','spec SB 2 pilot 2 data','normal OP 1 pilot','spec OP 1 pilot','normal SB 1 pilot 3 data','spec SB 1 pilot 3 data')
 %legend('normal_OP','spec_OP','normal_SB','spec_SB')
 title(' ')
 %axis([-10 20 1e-4 1e2])
