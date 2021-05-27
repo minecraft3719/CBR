@@ -146,11 +146,12 @@ for snr_i = 1 : length(SNR)
 %============================================
 %Only Pilot Normal
     Iop      = N_pilot * X_nga'*X_nga / sigmav2;            % FIM
-    CRB_op(snr_i) = abs(trace(pinv(Iop)));
+    Iop_wp      = N_pilot *Iop;
+    CRB_op(snr_i) = abs(trace(pinv(Iop_wp)));
 %============================================
 %Only Pilot Specular   
     %Iop_spec = ((-1)/(sigmav2)^2)*G*G'* X_nga'*sigmav2*eye(Nr*K)*X_nga*G*G';
-    Iop_spec = G*G'*Iop*G*G';
+    Iop_spec = G*G'*Iop_wp*G*G';
     CRB_op_spec(snr_i) = abs(trace(pinv(Iop_spec)));
 %============================================
 %SemiBlind
