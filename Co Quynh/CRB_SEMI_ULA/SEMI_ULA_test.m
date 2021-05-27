@@ -125,8 +125,6 @@ while  idx <= Nr*Nt*L
     end
 end
 
-LAMBDA = gpuArray(LAMBDA);
-partial_LAMBDA = cellfun(@gpuArray, partial_LAMBDA, 'UniformOutput', false);
 for test = 1:3
 N_total=4;
 N_pilot=N_total - test;
@@ -149,7 +147,7 @@ for snr_i = 1 : length(SNR)
     CRB_op_spec(snr_i) = abs(trace(pinv(Iop_spec)));
 %============================================
 %SemiBlind
-    Cyy      = sigmax2 * LAMBDA * LAMBDA'  + sigmav2 * eye(K*Nr);
+    Cyy      = sigmax2 * LAMBDA * LAMBDA'  + sigmav2 * eye(K*Nr, 'gpuArray');
     Cyy_inv  = pinv(Cyy);   
        
     for ii = 1 : Nr*Nt*L
