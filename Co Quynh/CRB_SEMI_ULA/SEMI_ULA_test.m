@@ -6,7 +6,7 @@ clc;
 %%
 tic
 Nt = 2;    % number of transmit antennas
-Nr = 8;    % number of receive antennas
+Nr = 16;    % number of receive antennas
 L   = 4;    % channel order                     Chua ro
 M   = 2;    % Number of multipaths 
 Pxp = 10;
@@ -175,17 +175,19 @@ for snr_i = 1 : length(SNR)
     
 %============================================
 %Semiblind Specular
-   I_SB_spec= G*G'*I_SB*G*G';
+   I_SB_spec=G*G'*I_SB*G*G';
    CRB_SB_spec_i           = pinv(I_SB_spec);
    CRB_SB_spec(snr_i)      = abs(trace(CRB_SB_spec_i));  
 end
 % 
 % figure
-semilogy(SNR,CRB_op,'->')
-hold on; semilogy(SNR,CRB_op_spec,'-+')
+C = {'b','r',[0, 0.5, 0]};
+Color = {'k',[0.4940, 0.1840, 0.5560],'m'};
+semilogy(SNR,CRB_op,'color',C{test},'marker','>');
+hold on; semilogy(SNR,CRB_op_spec,'color',Color{test},'marker','+');
 
-semilogy(SNR,CRB_SB,'-')
-hold on; semilogy(SNR,CRB_SB_spec,'-')
+semilogy(SNR,CRB_SB,'color',C{test},'marker','x');
+hold on; semilogy(SNR,CRB_SB_spec,'color',Color{test},'marker','o')
 end
 grid on
 ylabel('Normalized CRB')
