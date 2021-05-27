@@ -162,6 +162,7 @@ for snr_i = 1 : length(SNR)
         end
         disp(ii);
     end
+    I_D = gather(I_D);
 %============================================
 %Semiblind Normal
     I_SB       = N_data*I_D+N_pilot*Iop;
