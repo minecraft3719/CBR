@@ -1,4 +1,4 @@
-function [H,h_vec] = gen_chan_specular(fading,delay,DOA,N_r,L,N_t)
+function [H,h_vec] = gen_chan_specular(fading,delay,DOA,AOA,N_r,L,N_t)
 % fading, delay, DOA of size (M,Nt)
 H = zeros(N_r,L,N_t);
 M = size(DOA,1);  
@@ -11,7 +11,7 @@ for r = 1 : N_r
         for ll = 1 : L
             h = 0;
             for m = 1 : M 
-                h = h + fading(m,jj) * sinc(ll-delay(m,jj)) * exp(-1i*pi*(r-1)*sin(DOA(m,jj)));
+                h = h + fading(m,jj) * sinc(ll-delay(m,jj)) * exp(-1i*pi*(r-1)*(sin(DOA(m,jj))+sin(AOA(m,r))));
             end
             H(r,ll,jj) = h;
             h_vec      = [h_vec; h];
