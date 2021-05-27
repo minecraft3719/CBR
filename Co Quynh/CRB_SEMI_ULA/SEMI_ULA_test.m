@@ -125,9 +125,11 @@ while  idx <= Nr*Nt*L
     end
 end
 
+
+for test = 0:3
 N_total=4;
-N_pilot=2;
-N_data=N_total-N_pilot; % Dung 1 phan data
+N_pilot=N_total - test;
+N_data=test; % Dung 1 phan data
 %============================================
 SNR = -10:5:30;
 for snr_i = 1 : length(SNR)
@@ -149,9 +151,9 @@ for snr_i = 1 : length(SNR)
     Cyy      = sigmax2 * LAMBDA * LAMBDA'  + sigmav2 * eye(K*Nr);
     Cyy_inv  = pinv(Cyy);   
        
-    for ii = 1 : 128
+    for ii = 1 : Nr*Nt*L
         partial_Cyy_hii = sigmax2 * LAMBDA * partial_LAMBDA{1,ii}';
-        for jj = ii : 128
+        for jj = ii : Nr*Nt*L
             partial_Cyy_hjj = sigmax2 * LAMBDA * partial_LAMBDA{1,jj}';
             % Slepian-Bangs Formula
             I_D(ii,jj) = trace(Cyy_inv * partial_Cyy_hii * Cyy_inv * partial_Cyy_hjj);
@@ -173,12 +175,12 @@ for snr_i = 1 : length(SNR)
 end
 
 %figure
-semilogy(SNR,CRB_op,'-b>')
-hold on; semilogy(SNR,CRB_op_spec,'-r+')
+semilogy(SNR,CRB_op,'->')
+hold on; semilogy(SNR,CRB_op_spec,'-+')
 
-semilogy(SNR,CRB_SB,'-g')
-hold on; semilogy(SNR,CRB_SB_spec,'-m')
-
+semilogy(SNR,CRB_SB,'-')
+hold on; semilogy(SNR,CRB_SB_spec,'-')
+end
 
 grid on
 ylabel('Normalized CRB')
