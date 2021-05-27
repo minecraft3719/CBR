@@ -125,8 +125,9 @@ while  idx <= Nr*Nt*L
     end
 end
 
-
-for test = 0:3
+LAMBDA = gpuArray(LAMBDA);
+partial_LAMBDA = cellfun(@gpuArray, partial_LAMBDA, 'UniformOutput', false);
+for test = 1:3
 N_total=4;
 N_pilot=N_total - test;
 N_data=test; % Dung 1 phan data
@@ -153,7 +154,7 @@ for snr_i = 1 : length(SNR)
        
     for ii = 1 : Nr*Nt*L
         partial_Cyy_hii = sigmax2 * LAMBDA * partial_LAMBDA{1,ii}';
-        for jj = ii : Nr*Nt*L
+        parfor jj = ii : Nr*Nt*L
             partial_Cyy_hjj = sigmax2 * LAMBDA * partial_LAMBDA{1,jj}';
             % Slepian-Bangs Formula
             I_D(ii,jj) = trace(Cyy_inv * partial_Cyy_hii * Cyy_inv * partial_Cyy_hjj);
