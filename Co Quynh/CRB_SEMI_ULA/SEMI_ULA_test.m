@@ -125,6 +125,8 @@ while  idx <= Nr*Nt*L
     end
 end
 
+LAMBDA = gpuArray(LAMBDA);
+partial_LAMBDA = cellfun(@gpuArray, partial_LAMBDA, 'UniformOutput', false);
 for test = 1:3
 N_total=4;
 N_pilot=N_total - test;
